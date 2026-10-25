@@ -76,6 +76,7 @@ export const pitchDoc: PitchDoc = {
         "Triage: Needs a person surfaces only exceptions (e.g. site access unconfirmed, promise at risk) — operators do not dig through hundreds of healthy orders.",
         "Provenance: every situation card ties facts to a source; Primary tracker · full provenance folds below.",
         "Autonomous stop: cheap on-road passes run first (e.g. 1/11 ran, 10 skipped, proposals only when judgment is needed).",
+        "Legwork in the timeline: “Agent · cheap” rows sit between events — proof files checked, receipts matched, alert context linked — read-only, no Approve, Needs a person count unchanged.",
       ],
       liveLinks: [
         { label: "Needs a person", href: "/", hint: "Exception queue — reason + Decide on each card" },

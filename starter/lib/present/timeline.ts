@@ -65,6 +65,16 @@ export type LocalAgentProposal = {
   runId?: string | null
 }
 
+/** Newest first; an agent check sits just above the event it followed up on. */
+function compareNewest(a: TimelineEntry, b: TimelineEntry): number {
+  if (a.at && b.at && a.at !== b.at) return b.at.localeCompare(a.at)
+  if (a.at !== b.at) return a.at ? -1 : 1
+  const aCheck = a.id.startsWith("agent-check:") ? 0 : 1
+  const bCheck = b.id.startsWith("agent-check:") ? 0 : 1
+  if (aCheck !== bCheck) return aCheck - bCheck
+  return TONE_RANK[a.tone] - TONE_RANK[b.tone] || a.title.localeCompare(b.title)
+}
+
 function needsPersonFlag(entry: TimelineEntry): boolean {
   return entry.category === "attention" || entry.needsPerson
 }
@@ -214,10 +224,11 @@ export function buildTimeline(view: RecordView, localProposals: LocalAgentPropos
 
   for (const day of view.history) {
     for (const event of day.events) {
+      const byAgent = event.actorKind === "agent"
       entries.push({
         id: `activity:${event.id}`,
-        category: "activity",
-        icon: "waiting",
+        category: byAgent ? "agent" : "activity",
+        icon: byAgent ? "bot" : "waiting",
         title: event.text,
         detail: event.detail,
         meta: event.actor ? `Actor: ${event.actor}${event.shared ? " · shared bundle" : ""}` : (event.shared ? "Shared bundle" : null),
@@ -225,21 +236,38 @@ export function buildTimeline(view: RecordView, localProposals: LocalAgentPropos
         atLabel: null,
         tone: "neutral",
         needsPerson: false,
-        activityType: "na",
+        // Agent-recorded routine events (e.g. publishing a driver offer) are cheap work: reversible, no promise changed.
+        activityType: byAgent ? "cheap" : "na",
         progress: "completed",
-        agentInvolvement: "none",
-        source: event.actor ?? "System",
+        agentInvolvement: byAgent ? "cheap_work" : "none",
+        source: byAgent ? (event.actor ?? "Dispatch agent") : (event.actor ?? "System"),
         destination: "Order",
-        result: "Recorded",
+        result: byAgent ? "Done by agent" : "Recorded",
       })
+      if (event.agentCheck) {
+        entries.push({
+          id: `agent-check:${event.id}`,
+          category: "agent",
+          icon: "bot",
+          title: event.agentCheck.title,
+          detail: event.agentCheck.result,
+          meta: "Read-only check · no change to the order",
+          at: event.at,
+          atLabel: null,
+          tone: "neutral",
+          needsPerson: false,
+          activityType: "cheap",
+          progress: "completed",
+          agentInvolvement: "cheap_work",
+          source: "Ops agent",
+          destination: "Order",
+          result: "Checked",
+        })
+      }
     }
   }
 
-  entries.sort((a, b) => {
-    if (a.at && b.at && a.at !== b.at) return b.at.localeCompare(a.at)
-    if (a.at !== b.at) return a.at ? -1 : 1
-    return TONE_RANK[a.tone] - TONE_RANK[b.tone] || a.title.localeCompare(b.title)
-  })
+  entries.sort(compareNewest)
 
   const counts: TimelineCounts = {
     everything: entries.length,
@@ -454,13 +482,7 @@ export function searchTimelineEntries(
 }
 
 export function sortTimelineEntries(entries: TimelineEntry[], sort: TimelineSort): TimelineEntry[] {
-  if (sort === "newest") {
-    return [...entries].sort((a, b) => {
-      if (a.at && b.at && a.at !== b.at) return b.at.localeCompare(a.at)
-      if (a.at !== b.at) return a.at ? -1 : 1
-      return TONE_RANK[a.tone] - TONE_RANK[b.tone] || a.title.localeCompare(b.title)
-    })
-  }
+  if (sort === "newest") return [...entries].sort(compareNewest)
   return [...entries].sort((a, b) => {
     const urg = URGENCY_RANK[statusUrgency(a)] - URGENCY_RANK[statusUrgency(b)]
     if (urg !== 0) return urg

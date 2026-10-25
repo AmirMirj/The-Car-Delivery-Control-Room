@@ -239,5 +239,56 @@ export function describeEvent(event: EventRow, bundle: Bundle): HistoryEvent {
   }
 
   const named = actorName ? text.includes(actorName) : false
-  return { id: event.id, at: event.recordedAt, text, actor: named ? null : actorName, detail, shared }
+  return {
+    id: event.id, at: event.recordedAt, text, actor: named ? null : actorName, detail, shared,
+    actorKind: actor.kind, command: event.command, agentCheck: agentCheckFor(event.command, changes),
+  }
+}
+
+/**
+ * Cheap, read-only checks an agent can do right after a recorded event. Every
+ * result is computed from fields already on the event, never invented, and
+ * none of them changes the order.
+ */
+function agentCheckFor(command: string, changes: Record<string, unknown>): { title: string; result: string } | null {
+  switch (command) {
+    case "proof.submitted": {
+      const files = num(changes.file_count)
+      const kind = label(str(changes.kind)) || "Proof"
+      if (files === null) return null
+      return files > 0
+        ? { title: `Agent checked ${kind.toLowerCase()}`, result: `${files} file${files === 1 ? "" : "s"} received · queued for operator approval` }
+        : { title: `Agent checked ${kind.toLowerCase()}`, result: "No files attached · flagged for the driver to resend" }
+    }
+    case "expense.submitted": {
+      const receipts = num(changes.receipt_count)
+      const kind = (label(str(changes.kind)) || "Cost").toLowerCase()
+      if (receipts === null) return null
+      return receipts > 0
+        ? { title: "Agent matched receipt to claim", result: `${receipts} receipt${receipts === 1 ? "" : "s"} attached to the ${kind} claim · ready for review` }
+        : { title: "Agent matched receipt to claim", result: `No receipt on the ${kind} claim · flagged for review` }
+    }
+    case "alert.raised": {
+      const linked = [
+        changes.tracking_observation_id ? "tracking observation" : null,
+        changes.conversation_id ? "conversation" : null,
+        changes.driver_report_message_id ? "driver report" : null,
+        changes.proof_id ? "proof" : null,
+        changes.selected_pickup_window_id ? "pickup window" : null,
+        changes.prior_duty_assignment_id ? "prior assignment" : null,
+      ].filter(Boolean)
+      return {
+        title: "Agent gathered alert context",
+        result: linked.length ? `Linked ${linked.join(", ")} to the alert` : "No linked records found · left for the owner",
+      }
+    }
+    case "vehicle.delivered": {
+      if (!("keys_received" in changes) && !changes.receiver) return null
+      const keys = changes.keys_received === true ? "keys received" : changes.keys_received === false ? "keys not confirmed" : "keys not stated"
+      const receiver = changes.receiver ? "receiver recorded" : "no receiver recorded"
+      return { title: "Agent checked handover record", result: `${keys} · ${receiver}` }
+    }
+    default:
+      return null
+  }
 }

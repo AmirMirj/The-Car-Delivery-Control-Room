@@ -478,6 +478,11 @@ export type HistoryEvent = {
   actor: string | null
   detail: string | null
   shared: boolean
+  /** Who recorded the event (driver, operator, agent, system, …). */
+  actorKind?: string
+  command?: string
+  /** Read-only agent check derived from the event's own recorded fields. */
+  agentCheck?: { title: string; result: string } | null
 }
 
 export type HistoryDay = { key: string; label: string; events: HistoryEvent[] }

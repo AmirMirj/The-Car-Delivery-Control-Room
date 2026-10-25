@@ -142,7 +142,7 @@ function RoutingLine({ entry }: { entry: TimelineEntry }) {
 }
 
 function StructuredBodyView({ entry }: { entry: TimelineEntry }) {
-  if (entry.category !== "attention" && entry.category !== "agent") {
+  if (entry.activityType === "cheap" || (entry.category !== "attention" && entry.category !== "agent")) {
     return entry.detail ? <div className="timeline-detail">{entry.detail}</div> : null
   }
   const body = structuredBodyFromEntry(entry)
@@ -185,12 +185,16 @@ function TimelineRow({
     onReview &&
     orderId
 
-  return <div className={`timeline-row${entry.needsPerson ? " needs-person" : ""}${pendingLocal ? " has-actions" : ""}`}>
-    <Icon name={entry.icon} className={`tone-${entry.tone}`} />
+  const cheapAgent = entry.agentInvolvement === "cheap_work"
+
+  return <div className={`timeline-row${entry.needsPerson ? " needs-person" : ""}${pendingLocal ? " has-actions" : ""}${cheapAgent ? " cheap-agent" : ""}`}>
+    <Icon name={entry.icon} className={cheapAgent ? "tone-accent" : `tone-${entry.tone}`} />
     <div className="timeline-main">
       <div className="timeline-title-line">
         <span className={`timeline-title tone-${entry.tone}`}>{entry.title}</span>
-        <StatusPill entry={entry} />
+        {cheapAgent
+          ? <span className="timeline-chip type-cheap" title="Routine, reversible work the agent does on its own">Agent · cheap</span>
+          : <StatusPill entry={entry} />}
       </div>
       <RoutingLine entry={entry} />
       <StructuredBodyView entry={entry} />

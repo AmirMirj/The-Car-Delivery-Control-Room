@@ -152,6 +152,12 @@ export const buildNotes: BuildNotesDoc = {
           outcome: "changed",
         },
         {
+          title: "Cheap agent work hidden as plain “Activity”",
+          detail:
+            "The timeline listed dispatch-agent offers as anonymous activity. We reclassified agent-recorded events as agent cheap work and added read-only agent checks (proof files, receipts, alert context, handover) between events — derived only from recorded fields, no Approve needed, and “Needs a person” counts unchanged.",
+          outcome: "changed",
+        },
+        {
           title: "Trusting setup scripts’ feature path",
           detail:
             "First plan/tasks runs wrote into the wrong spec folder. Stopped, reset feature.json / SPECIFY_FEATURE, and regenerated under the intended number.",
