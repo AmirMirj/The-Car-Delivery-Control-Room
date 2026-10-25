@@ -5,7 +5,8 @@ import type { MutationOp } from "./policy"
 
 const url = process.env.DATABASE_URL
 if (!url) throw new Error("DATABASE_URL is required")
-const sql = postgres(url, { max: 5 })
+// prepare:false keeps us compatible with pooled hosted Postgres (Neon/Supabase) on Vercel.
+const sql = postgres(url, { max: 5, prepare: false })
 
 export type RunRow = {
   id: string

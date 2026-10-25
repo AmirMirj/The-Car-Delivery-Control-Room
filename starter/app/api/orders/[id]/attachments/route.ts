@@ -13,7 +13,15 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   const { id } = await context.params
   const [order] = await db.select({ id: orders.id }).from(orders).where(eq(orders.id, id)).limit(1)
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 })
-  const attachments = (await readAttachmentManifest()).filter((attachment) => attachment.order_id === id)
+  // Hosted deploys (e.g. Vercel) may have no attachments folder or object store; show "no files" instead of erroring.
+  if (!process.env.S3_ENDPOINT || !process.env.S3_BUCKET) return NextResponse.json({ attachments: [] })
+  let manifest: Awaited<ReturnType<typeof readAttachmentManifest>>
+  try {
+    manifest = await readAttachmentManifest()
+  } catch {
+    return NextResponse.json({ attachments: [] })
+  }
+  const attachments = manifest.filter((attachment) => attachment.order_id === id)
   if (!attachments.length) return NextResponse.json({ attachments: [] })
   const { client, bucket } = objectStore()
   try {
