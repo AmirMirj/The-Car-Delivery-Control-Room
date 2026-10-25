@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { use, useEffect, useState } from "react"
+import { opsLoadError } from "@/lib/present/ops-copy"
 import type { EntityKind, EntityList, EntityView } from "@/lib/present/types"
 import { AppFrame, type Section } from "./app-frame"
 import { Card } from "./card"
@@ -31,8 +32,8 @@ export function EntityPage({ kind, params }: { kind: EntityKind; params: Promise
   const index = INDEX[kind]
   return <AppFrame section={SECTION[kind]} snapshotAt={view?.snapshotAt ?? null}><main className="page">
     <nav className="crumbs" aria-label="Breadcrumb"><Link href={index.href}>{index.label}</Link><span>/</span><span>{view?.title ?? "Record"}</span></nav>
-    {error && <div className="record-state" role="alert"><h1>{error}</h1><p>The record could not be opened. <Link href={index.href}>Back to {index.label.toLowerCase()}</Link></p></div>}
-    {!error && !view && <p className="record-state" aria-busy="true">Loading…</p>}
+    {error && <div className="record-state" role="alert"><h1>{error.includes("not found") ? error : `Could not open this ${index.noun}`}</h1><p>{error.includes("not found") ? "It may have left the snapshot." : opsLoadError("Something went wrong")}<br /><Link href={index.href}>Back to {index.label.toLowerCase()}</Link></p></div>}
+    {!error && !view && <p className="record-state" aria-busy="true">Loading this {index.noun}…</p>}
     {view && <>
       <p className="eyebrow">{view.kindLabel}</p>
       <h1 className="page-title small">{view.title}</h1>
@@ -69,9 +70,9 @@ export function EntityIndex({ kind }: { kind: EntityKind }) {
     <h1 className="page-title small">{index.label}</h1>
     {list && <p className="intro">{list.items.length} in the snapshot, {involved} with at least one order.</p>}
     <div className="index-tools"><label className="search"><span className="sr-only">Filter</span><Icon name="search" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Filter ${index.label.toLowerCase()}`} /></label></div>
-    {error && <p className="board-error" role="alert">{error}.</p>}
-    {!list && !error && <p className="empty">Loading…</p>}
-    {list && items.length === 0 && <p className="empty">Nothing matches “{query}”.</p>}
+    {error && <p className="board-error" role="alert">{opsLoadError(`Could not load ${index.label.toLowerCase()}`)}</p>}
+    {!list && !error && <p className="empty">Loading {index.label.toLowerCase()}…</p>}
+    {list && items.length === 0 && <p className="empty">{query.trim() ? <>Nothing matches “{query}”. Try another filter.</> : <>No {index.label.toLowerCase()} in this snapshot.</>}</p>}
     <div className="index">{items.map((item) => <div className="index-row" key={item.id}>
       <div><Link href={item.href}>{item.title}</Link>{item.subtitle && <small>{item.subtitle}</small>}</div>
       <span className="index-count num">{item.count ? `${item.count} ${item.count === 1 ? "order" : "orders"}` : "no orders"}</span>

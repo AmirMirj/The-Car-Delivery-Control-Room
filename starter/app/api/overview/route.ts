@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { agentStatusCuesForOrders } from "@/lib/agent/store"
 import { buildBoardCard } from "@/lib/present/board"
 import { LANE_ORDER } from "@/lib/present/labels"
 import { loadBoardBundles } from "@/lib/present/load"
@@ -26,6 +27,13 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q")?.trim().toLowerCase() ?? ""
   const { snapshotAt, bundles } = await loadBoardBundles()
   const all = bundles.map(buildBoardCard)
+  let cues = new Map<string, string>()
+  try {
+    cues = await agentStatusCuesForOrders(all.map((card) => card.id))
+  } catch {
+    // Agent tables may be missing; board still works.
+  }
+  for (const card of all) card.agentStatus = cues.get(card.id) ?? "none"
   const counts = Object.fromEntries(LANE_ORDER.map((lane) => [lane, all.filter((card) => card.displayLane === lane).length]))
   const attentionCounts = Object.fromEntries(LANE_ORDER.map((lane) => [lane, all.filter((card) => card.displayLane === lane && card.attention.length > 0).length]))
   const matches = query ? all.filter((card) => [

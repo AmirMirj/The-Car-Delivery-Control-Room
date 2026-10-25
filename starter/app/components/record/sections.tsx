@@ -101,8 +101,10 @@ function RouteLeg({ leg, view }: { leg: JourneyLeg; view: RecordView }) {
 
 export function ConversationsSection({ view }: { view: RecordView }) {
   const { threads, notes } = view
-  return <section className="sec" id="conversations">
-    <SectionHead title="Conversations" count={threads.length} />
+  return <details className="sec sec-fold" id="conversations">
+    <summary className="sec-fold-summary">
+      <SectionHead title="Conversations" count={threads.length} note="Provenance · collapsed by default" />
+    </summary>
     {threads.length === 0 && notes.length === 0 && <Empty>No conversation is linked to this order.</Empty>}
     <div className="rows">
       {threads.map((thread) => <ThreadRow key={thread.id} thread={thread} view={view} />)}
@@ -114,7 +116,7 @@ export function ConversationsSection({ view }: { view: RecordView }) {
         <div className="row-side"><When at={note.at} withZone={false} /></div>
       </div>)}
     </div>
-  </section>
+  </details>
 }
 
 function ThreadRow({ thread, view }: { thread: ThreadView; view: RecordView }) {
@@ -174,11 +176,13 @@ export function EvidenceSection({ view }: { view: RecordView }) {
 
 export function DecisionsSection({ view }: { view: RecordView }) {
   const { proposals } = view
-  return <section className="sec" id="decisions">
-    <SectionHead title="Prior agent work" count={proposals.length} />
+  return <details className="sec sec-fold" id="decisions">
+    <summary className="sec-fold-summary">
+      <SectionHead title="Prior agent work" count={proposals.length} note="Provenance · collapsed by default" />
+    </summary>
     {proposals.length === 0 && <Empty>No agent has proposed anything on this order yet. Your agent's proposals and the human decision on them belong here.</Empty>}
     <div className="rows">{proposals.map((proposal) => <ProposalRow key={proposal.id} proposal={proposal} />)}</div>
-  </section>
+  </details>
 }
 
 function ProposalRow({ proposal }: { proposal: ProposalView }) {
@@ -228,15 +232,17 @@ export function ActivitySection({ view }: { view: RecordView }) {
   const [all, setAll] = useState(false)
   const events = view.history.flatMap((day) => day.events)
   const shown = all ? events : events.slice(0, 6)
-  return <section className="sec" id="history">
-    <SectionHead title="Activity" count={view.historyTotal} />
+  return <details className="sec sec-fold" id="history">
+    <summary className="sec-fold-summary">
+      <SectionHead title="Activity" count={view.historyTotal} note="Provenance · collapsed by default" />
+    </summary>
     {events.length === 0 && <Empty>No events recorded.</Empty>}
     <div className="events">{shown.map((event) => <div className="event" key={event.id}>
       <time dateTime={event.at} title={fmtDateTime(event.at)}>{fmtDay(event.at)} {fmtClock(event.at)}</time>
       <div className="event-text"><b>{event.text}</b>{event.actor && <span className="actor"> · {event.actor}</span>}{event.shared && <span className="actor"> · shared bundle</span>}{all && event.detail && <small>{event.detail}</small>}</div>
     </div>)}</div>
     {events.length > 6 && <button type="button" className="show-more" onClick={() => setAll((value) => !value)}>{all ? "Show the latest only" : `Show all ${events.length} events`}</button>}
-  </section>
+  </details>
 }
 
 /* ── Detailed route, for the records panel ──────────────────────────────── */

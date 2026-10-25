@@ -187,7 +187,15 @@ async function main(): Promise<void> {
   if (disagreements.length) {
     throw new Error(`Board and record disagree on "needs a person": ${disagreements.join(", ")}`)
   }
-  console.log(`Verified ${order.id}: ${orderPlans.length} plans, ${(body.related.transport_points ?? []).length} points, ${(body.related.transport_segments ?? []).length} segments. Board and record agree on "needs a person" for ${overview.visible.length} orders.`)
+
+  const exceptionsResponse = await fetch(`${base}/api/exceptions`)
+  if (!exceptionsResponse.ok) throw new Error(`Exceptions API returned ${exceptionsResponse.status}`)
+  const exceptions = await exceptionsResponse.json() as { totalExceptions: number; items: { reason: string }[] }
+  if (!exceptions.totalExceptions || !exceptions.items.every((item) => item.reason)) {
+    throw new Error("Exceptions queue missing items or reasons")
+  }
+
+  console.log(`Verified ${order.id}: ${orderPlans.length} plans, ${(body.related.transport_points ?? []).length} points, ${(body.related.transport_segments ?? []).length} segments. Board and record agree on "needs a person" for ${overview.visible.length} orders. Exceptions queue: ${exceptions.totalExceptions}.`)
 }
 
 main().catch((error: unknown) => {

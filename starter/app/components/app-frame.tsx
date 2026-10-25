@@ -3,11 +3,12 @@ import type { ReactNode } from "react"
 import { fmtDateTime } from "@/lib/present/time"
 import { Icon } from "./icons"
 
-export type Section = "board" | "inbox" | "customers" | "drivers" | "sites"
+export type Section = "exceptions" | "lanes" | "board" | "inbox" | "customers" | "drivers" | "sites" | "build" | "pitch"
 
 const GROUPS: { label: string; links: { section: Section; href: string; label: string; icon: string }[] }[] = [
   { label: "Work", links: [
-    { section: "board", href: "/", label: "Orders", icon: "car" },
+    { section: "exceptions", href: "/", label: "Needs a person", icon: "alert" },
+    { section: "lanes", href: "/lanes", label: "By lane", icon: "car" },
     { section: "inbox", href: "/inbox", label: "Inbox", icon: "inbox" },
   ] },
   { label: "People and places", links: [
@@ -15,21 +16,26 @@ const GROUPS: { label: string; links: { section: Section; href: string; label: s
     { section: "drivers", href: "/drivers", label: "Drivers", icon: "driver" },
     { section: "sites", href: "/sites", label: "Places", icon: "building" },
   ] },
+  { label: "Review", links: [
+    { section: "pitch", href: "/pitch", label: "Pitch", icon: "file" },
+    { section: "build", href: "/build", label: "Build notes", icon: "message" },
+  ] },
 ]
 
 export function AppFrame({ children, section, snapshotAt, board = false }: { children: ReactNode; section: Section; snapshotAt?: string | null; board?: boolean }) {
+  const active = section === "board" ? "exceptions" : section
   return <div className={`app${board ? " app-board" : ""}`}>
     <aside className="sidebar">
       <Link href="/" className="wordmark" aria-label="Control Room home">Control Room</Link>
       <nav className="sidebar-nav" aria-label="Main navigation">
         {GROUPS.map((group) => <div className="nav-group" key={group.label}>
           <div className="nav-label">{group.label}</div>
-          {group.links.map((link) => <Link key={link.section} href={link.href} className={`nav-link${section === link.section ? " active" : ""}`} aria-current={section === link.section ? "page" : undefined}>
+          {group.links.map((link) => <Link key={link.section} href={link.href} className={`nav-link${active === link.section ? " active" : ""}`} aria-current={active === link.section ? "page" : undefined}>
             <Icon name={link.icon} size={15} />{link.label}
           </Link>)}
         </div>)}
       </nav>
-      <div className="sidebar-foot">{snapshotAt ? `Snapshot ${fmtDateTime(snapshotAt)}` : "Fictional snapshot"}<br />Fictional data · read only</div>
+      <div className="sidebar-foot">{snapshotAt ? `Snapshot ${fmtDateTime(snapshotAt)}` : "Fictional snapshot"}<br />Fictional data · demo writes only</div>
     </aside>
     <div className="main">{children}</div>
   </div>

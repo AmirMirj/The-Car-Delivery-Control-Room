@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { opsLoadError } from "@/lib/present/ops-copy"
 import { fmtDateTime, fmtDay } from "@/lib/present/time"
 import type { InboxThreadView, InboxView } from "@/lib/present/types"
 import { AppFrame } from "../components/app-frame"
@@ -40,9 +41,10 @@ export default function InboxPage() {
     <section className="mail-list" aria-label="Support inbox threads">
       <header className="mail-list-head">
         <h1>Support inbox</h1>
-        <p>{view ? `${view.open} of ${view.threads.length} open` : "Loading"} · arrived before an order link was certain</p>
+        <p>{view ? `${view.open} of ${view.threads.length} open` : "Loading the inbox…"} · arrived before an order link was certain</p>
       </header>
-      {error && <p className="board-error" role="alert">{error}.</p>}
+      {error && <p className="board-error" role="alert">{opsLoadError("Could not load the inbox")}</p>}
+      {view && view.threads.length === 0 && !error && <p className="empty">No support threads in this snapshot.</p>}
       <ul className="mail-rows">{view?.threads.map((item) => {
         const last = item.messages[item.messages.length - 1]
         return <li key={item.id}>
@@ -58,8 +60,9 @@ export default function InboxPage() {
       })}</ul>
     </section>
     <section className="mail-read" aria-label="Conversation">
-      {!view && !error && <p className="empty">Loading…</p>}
-      {view && !thread && <p className="empty">Choose a thread.</p>}
+      {!view && !error && <p className="empty">Loading the conversation…</p>}
+      {view && view.threads.length === 0 && <p className="empty">Nothing to read yet.</p>}
+      {view && view.threads.length > 0 && !thread && <p className="empty">Choose a thread from the list.</p>}
       {thread && <Thread thread={thread} onBack={() => setShowList(true)} />}
     </section>
   </main></AppFrame>

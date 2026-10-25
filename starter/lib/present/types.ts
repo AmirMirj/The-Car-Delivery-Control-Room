@@ -89,6 +89,8 @@ export type BoardCard = {
   decisive: KeyDate | null
   work: WorkLine[]
   updatedAt: string
+  /** On-road agent cue when enriched by overview: none | working | proposal_waiting | failed */
+  agentStatus?: string | null
 }
 
 export type Overview = {

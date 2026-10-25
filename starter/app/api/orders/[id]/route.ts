@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { loadOrder } from "@/lib/present/load"
 import { buildRecordView } from "@/lib/present/record"
+import { loadAgentState } from "@/lib/agent/state"
 
 export const runtime = "nodejs"
 
@@ -12,8 +13,9 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   // The raw records keep their shape for anyone reading the API. `view` is the
   // same information read out with labels, names and grouping for the interface.
   const view = buildRecordView(bundle)
+  const agent = await loadAgentState(id, view.attention, order.displayLane)
   return NextResponse.json({
     order, customer, pickup, delivery, pickupSite, deliverySite, items, drivers, alerts, conversations: threads, messages, events,
-    related, bundleOrderRefs, view,
+    related, bundleOrderRefs, view, agent,
   })
 }

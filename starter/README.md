@@ -14,12 +14,13 @@ cp .env.example .env
 npm ci
 docker compose up -d --wait
 npm run db:push
+npm run db:agent-tables
 npm run db:seed
 npm run attachments:seed
 npm run dev
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3000 — home is the **Needs a person** exception queue; lane browse is at `/lanes` (coloured lane pills, owner pills, decisive-date progress, and filter pills: All / Needs attention / Has owner). Use **Run for all qualifying** on the home page to start an on-road agent fleet pass across the snapshot (skips orders with pending proposals; blocked while a pass is running). Optional `OPENAI_API_KEY` polishes on-road agent wording; mock tools work without it.
 
 The Compose file uses three ports on this computer: 5438 for Postgres, 9009 and 9010 for the attachment store. If one of them is already in use, change it in `compose.yaml` and update `DATABASE_URL` or `S3_ENDPOINT` in `.env` to match.
 

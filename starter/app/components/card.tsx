@@ -1,6 +1,8 @@
 "use client"
 
 import Link from "next/link"
+import { cardOwnerName } from "@/lib/present/board-filters"
+import { boardProgressPct, ownerToneIndex } from "@/lib/present/board-progress"
 import { laneLabel } from "@/lib/present/labels"
 import { fmtDateTime, fmtRange, fmtWeekday } from "@/lib/present/time"
 import type { BoardCard, Tone } from "@/lib/present/types"
@@ -12,9 +14,13 @@ export const MARK_ICON: Record<string, string> = {
 }
 
 /** One order on a board or in a list: car, reference, customer, route, the decisive date and the work tray. */
-export function Card({ card, role }: { card: BoardCard; role?: string | null }) {
+export function Card({ card, role, snapshotAt }: { card: BoardCard; role?: string | null; snapshotAt?: string | null }) {
   const marks = uniqueMarks(card)
   const date = card.decisive
+  const owner = cardOwnerName(card)
+  const progress = boardProgressPct(snapshotAt ?? null, card.decisive, card.displayLane)
+  const mutedProgress = card.displayLane === "delivered" || card.displayLane === "cancelled"
+
   return <div>
     {role && <div className="card-role">{role}</div>}
     <Link className="card" href={`/orders/${card.id}`} aria-label={`${card.vehicle}, ${card.reference}, ${laneLabel(card.displayLane)}`}>
@@ -36,6 +42,31 @@ export function Card({ card, role }: { card: BoardCard; role?: string | null }) 
           <span className="card-date-label">{date.label}</span>
           <span className="card-date-value num" title={date.end ? fmtRange(date.start, date.end, date.zone) : fmtDateTime(date.start, date.zone)}>{dateText(date.start, date.end, date.zone)}</span>
           {date.note && <span className="card-date-note" title={date.note}>· {date.note}</span>}
+        </div>}
+        {owner && <div className="card-line card-owner">
+          <span className="card-owner-label">Assign:</span>
+          <span className={`owner-pill owner-tone-${ownerToneIndex(owner)}`}>{owner}</span>
+        </div>}
+        {card.agentStatus && card.agentStatus !== "none" && (
+          <div className={`card-agent-cue cue-${card.agentStatus}`}>
+            On-road · {card.agentStatus.replaceAll("_", " ")}
+          </div>
+        )}
+        {progress != null && <div className={`card-progress${mutedProgress ? " is-muted" : ""}`}>
+          <div className="card-progress-label">Progress</div>
+          <div className="card-progress-row">
+            <div
+              className="card-progress-track"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress}
+              aria-label={`Progress ${progress}%`}
+            >
+              <div className="card-progress-fill" style={{ width: `${progress}%` }} />
+            </div>
+            <span className="card-progress-pct num">{progress}%</span>
+          </div>
         </div>}
       </div>
       {card.work.length > 0 && <div className="card-tray">
